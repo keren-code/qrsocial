@@ -3,294 +3,435 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escáner QR con Registro</title>
+    <title>Escáner QR con Validación</title>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        body {
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
         }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
         .container {
+            max-width: 1000px;
+            margin: 0 auto;
             background-color: white;
             border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        h1 {
-            color: #333;
+        
+        header {
             text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
         }
-        .login-section, .scanner-section {
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .scanner-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             margin-bottom: 20px;
         }
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
+        
         #video-container {
             position: relative;
             width: 100%;
-            margin: 20px 0;
+            max-width: 500px;
+            margin-bottom: 20px;
         }
+        
         #video {
             width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            border-radius: 8px;
+            background-color: #000;
         }
+        
         #scan-region {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 200px;
+            width: 70%;
             height: 200px;
-            border: 2px solid #4CAF50;
+            border: 2px solid #fff;
             box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
         }
-        .scanned-data {
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-radius: 4px;
+        
+        .scanner-controls {
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        #btn-export {
+            background-color: #27ae60;
+        }
+        
+        #btn-export:hover {
+            background-color: #219653;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .status.scanning {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status.success {
+            background-color: #4CAF50;
+            color: white;
+            animation: pulse 0.5s;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            animation: shake 0.5s;
+        }
+        
+        .scanned-list {
             margin-top: 20px;
         }
+        
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-bottom: 20px;
         }
+        
         th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
+            padding: 12px 15px;
             text-align: left;
+            border-bottom: 1px solid #ddd;
         }
+        
         th {
             background-color: #f2f2f2;
+            font-weight: bold;
         }
-        .logout-btn {
-            background-color: #f44336;
-            margin-top: 10px;
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
-        .logout-btn:hover {
-            background-color: #d32f2f;
+        
+        .scanned {
+            color: #27ae60;
+        }
+        
+        .duplicate {
+            color: #e74c3c;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Escáner QR con Registro</h1>
+        <header>
+            <h1>Escáner QR con Validación</h1>
+            <p>Escanea códigos QR y verifica si ya han sido escaneados previamente</p>
+        </header>
         
-        <div id="loginSection" class="login-section">
-            <h2>Iniciar Sesión</h2>
-            <input type="text" id="username" placeholder="Usuario" value="sonica">
-            <input type="password" id="password" placeholder="Contraseña" value="232323">
-            <button id="loginBtn">Iniciar Sesión</button>
-        </div>
-        
-        <div id="scannerSection" class="scanner-section" style="display: none;">
-            <button id="startScannerBtn">Iniciar Escáner</button>
-            <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
-            
-            <div id="video-container" style="display: none;">
+        <div class="scanner-container">
+            <div id="video-container">
                 <video id="video" playsinline></video>
                 <div id="scan-region"></div>
             </div>
             
-            <div class="scanned-data">
-                <h3>Registro de Escaneos</h3>
-                <p>Total escaneos: <span id="scanCount">0</span></p>
-                <table id="scanTable">
-                    <thead>
-                        <tr>
-                            <th>Fecha y Hora</th>
-                            <th>Contenido del QR</th>
-                        </tr>
-                    </thead>
-                    <tbody id="scanTableBody">
-                        <!-- Los registros se insertarán aquí -->
-                    </tbody>
-                </table>
+            <div class="scanner-controls">
+                <button id="btn-start">Iniciar Escáner</button>
+                <button id="btn-stop" disabled>Detener Escáner</button>
+                <button id="btn-export">Exportar a PDF</button>
             </div>
+            
+            <div id="status" class="status scanning">Preparado para escanear</div>
+        </div>
+        
+        <div class="scanned-list">
+            <h2>Registro de Escaneos</h2>
+            <table id="scanned-table">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Fecha y Hora</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Los registros se agregarán aquí dinámicamente -->
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        // Elementos del DOM
-        const loginSection = document.getElementById('loginSection');
-        const scannerSection = document.getElementById('scannerSection');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const loginBtn = document.getElementById('loginBtn');
-        const startScannerBtn = document.getElementById('startScannerBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const videoContainer = document.getElementById('video-container');
-        const video = document.getElementById('video');
-        const scanCountElement = document.getElementById('scanCount');
-        const scanTableBody = document.getElementById('scanTableBody');
-
-        // Variables de estado
-        let stream = null;
-        let scanning = false;
-        let scans = [];
-
-        // Cargar escaneos previos desde localStorage
-        function loadScans() {
-            const savedScans = localStorage.getItem('qrScans');
-            if (savedScans) {
-                scans = JSON.parse(savedScans);
-                updateScanTable();
-            }
-        }
-
-        // Guardar escaneos en localStorage
-        function saveScans() {
-            localStorage.setItem('qrScans', JSON.stringify(scans));
-        }
-
-        // Actualizar la tabla de escaneos
-        function updateScanTable() {
-            scanTableBody.innerHTML = '';
-            scanCountElement.textContent = scans.length;
+        document.addEventListener('DOMContentLoaded', function() {
+            // Variables globales
+            const video = document.getElementById('video');
+            const startBtn = document.getElementById('btn-start');
+            const stopBtn = document.getElementById('btn-stop');
+            const exportBtn = document.getElementById('btn-export');
+            const statusDiv = document.getElementById('status');
+            const tableBody = document.querySelector('#scanned-table tbody');
             
-            scans.forEach(scan => {
-                const row = document.createElement('tr');
-                
-                const dateCell = document.createElement('td');
-                dateCell.textContent = new Date(scan.timestamp).toLocaleString();
-                
-                const contentCell = document.createElement('td');
-                contentCell.textContent = scan.data;
-                
-                row.appendChild(dateCell);
-                row.appendChild(contentCell);
-                scanTableBody.appendChild(row);
-            });
-        }
+            let scanning = false;
+            let stream = null;
+            let scannedCodes = new Set(); // Para verificar códigos únicos
+            let scannedData = []; // Para almacenar todos los datos escaneados
+            
+            // Sonidos (codificados en base64 para evitar archivos externos)
+            const successSound = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbVtfdJivrJBhNjVgodDbq2EcBStztfLNjFgoETaEt+LJgVQhCSx9tNnDdEweBSt6r9G9bEkbBDB1q8u4aEQZBDJ0qcm2ZkMYBTN1qMq3aEQYBTR2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBj极音");
+            const errorSound = new Audio("data:audio/wav;base64,UklGRqQGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YYAGAACAgIF9e3l4eHl7gISHiYuLiYF3b2VfW1xeYGRqcnmCio6QjIR2ZFhMRD07PkFGTFddZGx0fIWMkZOSjIFwX1RMPDYxLzE0OD9JUVlmbnd+goF5bGRdWVhZXGFobXZ9hYyRlpiWj4V6cGZhXFtaWltdYGRrcnp/goiMkJKTlJOOhnx1cGxqaWlqbXB0eX+EiY2Pj42Lh4B6dXFwbm5vcHJ1eX2BhImMj5GQjomEfXh0cW9vbm9wcnR3e36ChYiLjI2OjYuIhIB7eHVzcXBvcHJ1eHyAg4aJiouMi4mGg357eHZ1dHNzc3V3e36BhIaIioqKiYeEgH57eXd2dXR0dXd5fH+ChIWHiIiIh4WDgX99e3l4d3Z2dnd5fH6Ag4SFhoeHhoWDgn9+fHp5eHh4eHl6fH6AgYKEhIWFhYSDgoGAfnx7enl5eXl6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhIS极音");
 
-        // Iniciar el escáner
-        async function startScanner() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" } 
-                });
-                video.srcObject = stream;
-                video.setAttribute("playsinline", true);
-                video.play();
-                videoContainer.style.display = 'block';
-                scanning = true;
-                requestAnimationFrame(tick);
-            } catch (err) {
-                console.error("Error al acceder a la cámara:", err);
-                alert("No se pudo acceder a la cámara. Asegúrate de permitir el acceso.");
-            }
-        }
+            // Inicializar la cámara
+            startBtn.addEventListener('click', initCamera);
+            stopBtn.addEventListener('click', stopCamera);
+            exportBtn.addEventListener('click', exportToPDF);
 
-        // Detener el escáner
-        function stopScanner() {
-            scanning = false;
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-            videoContainer.style.display = 'none';
-        }
-
-        // Función principal de escaneo
-        function tick() {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                const canvasElement = document.createElement('canvas');
-                const canvas = canvasElement.getContext('2d');
-                canvasElement.height = video.videoHeight;
-                canvasElement.width = video.videoWidth;
-                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-                
-                const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-                
-                if (code) {
-                    // QR detectado
-                    const scanData = {
-                        data: code.data,
-                        timestamp: Date.now()
-                    };
+            // Función para inicializar la cámara
+            async function initCamera() {
+                try {
+                    statusDiv.textContent = "Iniciando cámara...";
+                    statusDiv.className = "status scanning";
                     
-                    // Agregar a la lista si no existe
-                    if (!scans.some(scan => scan.data === code.data && 
-                        scan.timestamp > Date.now() - 5000)) { // Evitar duplicados en 5 segundos
-                        scans.push(scanData);
-                        saveScans();
-                        updateScanTable();
-                    }
+                    stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: "environment" } 
+                    });
+                    
+                    video.srcObject = stream;
+                    video.setAttribute("playsinline", true);
+                    video.play();
+                    
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    scanning = true;
+                    
+                    statusDiv.textContent = "Escaneando...";
+                    requestAnimationFrame(tick);
+                    
+                } catch (error) {
+                    console.error("Error al acceder a la cámara:", error);
+                    statusDiv.textContent = "Error al acceder a la cámara: " + error.message;
+                    statusDiv.className = "status error";
                 }
             }
-            
-            if (scanning) {
-                requestAnimationFrame(tick);
+
+            // Función para detener la cámara
+            function stopCamera() {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                }
+                
+                scanning = false;
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                
+                statusDiv.textContent = "Cámara detenida";
+                statusDiv.className = "status";
             }
-        }
 
-        // Event Listeners
-        loginBtn.addEventListener('click', () => {
-            if (usernameInput.value === 'sonica' && passwordInput.value === '232323') {
-                loginSection.style.display = 'none';
-                scannerSection.style.display = 'block';
-                loadScans();
-            } else {
-                alert('Usuario o contraseña incorrectos');
+            // Función principal de escaneo
+            function tick() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    
+                    if (code) {
+                        processScannedCode(code.data);
+                    }
+                }
+                
+                if (scanning) {
+                    requestAnimationFrame(tick);
+                }
             }
-        });
 
-        startScannerBtn.addEventListener('click', () => {
-            if (!scanning) {
-                startScanner();
-                startScannerBtn.textContent = 'Detener Escáner';
-            } else {
-                stopScanner();
-                startScannerBtn.textContent = 'Iniciar Escáner';
+            // Procesar el código escaneado
+            function processScannedCode(code) {
+                // Detener temporalmente el escaneo para evitar múltiples lecturas
+                scanning = false;
+                
+                const now = new Date();
+                const dateTime = now.toLocaleString();
+                
+                // Verificar si el código ya fue escaneado
+                if (scannedCodes.has(code)) {
+                    // Código duplicado
+                    statusDiv.textContent = "¡Código ya escaneado!";
+                    statusDiv.className = "status error";
+                    
+                    // Vibrar
+                    if (navigator.vibrate) {
+                        navigator.vibrate(300);
+                    }
+                    
+                    // Sonido de error
+                    errorSound.play();
+                    
+                    // Reanudar escaneo después de un breve retraso
+                    setTimeout(() => {
+                        scanning = true;
+                        requestAnimationFrame(tick);
+                    }, 2000);
+                    
+                    return;
+                }
+                
+                // Código nuevo
+                scannedCodes.add(code);
+                scannedData.push({
+                    code: code,
+                    timestamp: now,
+                    dateTime: dateTime,
+                    status: "Escaneado"
+                });
+                
+                // Actualizar la tabla
+                updateScannedTable();
+                
+                // Feedback visual y auditivo
+                statusDiv.textContent = "¡Código escaneado correctamente!";
+                statusDiv.className = "status success";
+                successSound.play();
+                
+                // Reanudar escaneo después de un breve retraso
+                setTimeout(() => {
+                    scanning = true;
+                    statusDiv.textContent = "Escaneando...";
+                    statusDiv.className = "status scanning";
+                    requestAnimationFrame(tick);
+                }, 1500);
             }
-        });
 
-        logoutBtn.addEventListener('click', () => {
-            stopScanner();
-            scannerSection.style.display = 'none';
-            loginSection.style.display = 'block';
-            startScannerBtn.textContent = 'Iniciar Escáner';
-        });
-
-        // Cargar escaneos al iniciar si ya está logueado (por si refresca)
-        window.addEventListener('load', () => {
-            // Verificar si hay una sesión activa (simulado)
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            if (isLoggedIn) {
-                loginSection.style.display = 'none';
-                scannerSection.style.display = 'block';
-                loadScans();
+            // Actualizar la tabla de códigos escaneados
+            function updateScannedTable() {
+                // Limpiar la tabla
+                tableBody.innerHTML = '';
+                
+                // Agregar filas para cada código escaneado
+                scannedData.forEach(item => {
+                    const row = document.createElement('tr');
+                    
+                    const codeCell = document.createElement('td');
+                    codeCell.textContent = item.code;
+                    
+                    const dateCell = document.createElement('td');
+                    dateCell.textContent = item.dateTime;
+                    
+                    const statusCell = document.createElement('td');
+                    statusCell.textContent = item.status;
+                    statusCell.className = "scanned";
+                    
+                    row.appendChild(codeCell);
+                    row.appendChild(dateCell);
+                    row.appendChild(statusCell);
+                    
+                    tableBody.appendChild(row);
+                });
             }
-        });
 
-        // Guardar estado de login al cerrar
-        window.addEventListener('beforeunload', () => {
-            if (scannerSection.style.display !== 'none') {
-                localStorage.setItem('isLoggedIn', 'true');
+            // Exportar a PDF
+            function exportToPDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Título
+                doc.setFontSize(20);
+                doc.text("Registro de Códigos QR Escaneados", 14, 15);
+                
+                // Fecha de exportación
+                doc.setFontSize(12);
+                doc.text(`Exportado: ${new Date().toLocaleString()}`, 14, 25);
+                
+                // Datos de la tabla
+                const tableData = scannedData.map(item => [
+                    item.code,
+                    item.dateTime,
+                    item.status
+                ]);
+                
+                // Crear tabla
+                doc.autoTable({
+                    head: [['Código', 'Fecha y Hora', 'Estado']],
+                    body: tableData,
+                    startY: 30,
+                    styles: { fontSize: 10 },
+                    headStyles: { fillColor: [52, 152, 219] }
+                });
+                
+                // Guardar PDF
+                doc.save('registro_qr_escaneados.pdf');
             }
         });
     </script>
