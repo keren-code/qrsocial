@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escáner QR con Registro</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .login-section, .scanner-section {
+            margin-bottom: 20px;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #video-container {
+            position: relative;
+            width: 100%;
+            margin: 20px 0;
+        }
+        #video {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #scan-region {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border: 2px solid #4CAF50;
+            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
+        }
+        .scanned-data {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .logout-btn {
+            background-color: #f44336;
+            margin-top: 10px;
+        }
+        .logout-btn:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Escáner QR con Registro</h1>
+        
+        <div id="loginSection" class="login-section">
+            <h2>Iniciar Sesión</h2>
+            <input type="text" id="username" placeholder="Usuario" value="sonica">
+            <input type="password" id="password" placeholder="Contraseña" value="232323">
+            <button id="loginBtn">Iniciar Sesión</button>
+        </div>
+        
+        <div id="scannerSection" class="scanner-section" style="display: none;">
+            <button id="startScannerBtn">Iniciar Escáner</button>
+            <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+            
+            <div id="video-container" style="display: none;">
+                <video id="video" playsinline></video>
+                <div id="scan-region"></div>
+            </div>
+            
+            <div class="scanned-data">
+                <h3>Registro de Escaneos</h3>
+                <p>Total escaneos: <span id="scanCount">0</span></p>
+                <table id="scanTable">
+                    <thead>
+                        <tr>
+                            <th>Fecha y Hora</th>
+                            <th>Contenido del QR</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scanTableBody">
+                        <!-- Los registros se insertarán aquí -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos del DOM
+        const loginSection = document.getElementById('loginSection');
+        const scannerSection = document.getElementById('scannerSection');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const startScannerBtn = document.getElementById('startScannerBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const videoContainer = document.getElementById('video-container');
+        const video = document.getElementById('video');
+        const scanCountElement = document.getElementById('scanCount');
+        const scanTableBody = document.getElementById('scanTableBody');
+
+        // Variables de estado
+        let stream = null;
+        let scanning = false;
+        let scans = [];
+
+        // Cargar escaneos previos desde localStorage
+        function loadScans() {
+            const savedScans = localStorage.getItem('qrScans');
+            if (savedScans) {
+                scans = JSON.parse(savedScans);
+                updateScanTable();
+            }
+        }
+
+        // Guardar escaneos en localStorage
+        function saveScans() {
+            localStorage.setItem('qrScans', JSON.stringify(scans));
+        }
+
+        // Actualizar la tabla de escaneos
+        function updateScanTable() {
+            scanTableBody.innerHTML = '';
+            scanCountElement.textContent = scans.length;
+            
+            scans.forEach(scan => {
+                const row = document.createElement('tr');
+                
+                const dateCell = document.createElement('td');
+                dateCell.textContent = new Date(scan.timestamp).toLocaleString();
+                
+                const contentCell = document.createElement('td');
+                contentCell.textContent = scan.data;
+                
+                row.appendChild(dateCell);
+                row.appendChild(contentCell);
+                scanTableBody.appendChild(row);
+            });
+        }
+
+        // Iniciar el escáner
+        async function startScanner() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" } 
+                });
+                video.srcObject = stream;
+                video.setAttribute("playsinline", true);
+                video.play();
+                videoContainer.style.display = 'block';
+                scanning = true;
+                requestAnimationFrame(tick);
+            } catch (err) {
+                console.error("Error al acceder a la cámara:", err);
+                alert("No se pudo acceder a la cámara. Asegúrate de permitir el acceso.");
+            }
+        }
+
+        // Detener el escáner
+        function stopScanner() {
+            scanning = false;
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            videoContainer.style.display = 'none';
+        }
+
+        // Función principal de escaneo
+        function tick() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const canvasElement = document.createElement('canvas');
+                const canvas = canvasElement.getContext('2d');
+                canvasElement.height = video.videoHeight;
+                canvasElement.width = video.videoWidth;
+                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+                
+                const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                
+                if (code) {
+                    // QR detectado
+                    const scanData = {
+                        data: code.data,
+                        timestamp: Date.now()
+                    };
+                    
+                    // Agregar a la lista si no existe
+                    if (!scans.some(scan => scan.data === code.data && 
+                        scan.timestamp > Date.now() - 5000)) { // Evitar duplicados en 5 segundos
+                        scans.push(scanData);
+                        saveScans();
+                        updateScanTable();
+                    }
+                }
+            }
+            
+            if (scanning) {
+                requestAnimationFrame(tick);
+            }
+        }
+
+        // Event Listeners
+        loginBtn.addEventListener('click', () => {
+            if (usernameInput.value === 'sonica' && passwordInput.value === '232323') {
+                loginSection.style.display = 'none';
+                scannerSection.style.display = 'block';
+                loadScans();
+            } else {
+                alert('Usuario o contraseña incorrectos');
+            }
+        });
+
+        startScannerBtn.addEventListener('click', () => {
+            if (!scanning) {
+                startScanner();
+                startScannerBtn.textContent = 'Detener Escáner';
+            } else {
+                stopScanner();
+                startScannerBtn.textContent = 'Iniciar Escáner';
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            stopScanner();
+            scannerSection.style.display = 'none';
+            loginSection.style.display = 'block';
+            startScannerBtn.textContent = 'Iniciar Escáner';
+        });
+
+        // Cargar escaneos al iniciar si ya está logueado (por si refresca)
+        window.addEventListener('load', () => {
+            // Verificar si hay una sesión activa (simulado)
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (isLoggedIn) {
+                loginSection.style.display = 'none';
+                scannerSection.style.display = 'block';
+                loadScans();
+            }
+        });
+
+        // Guardar estado de login al cerrar
+        window.addEventListener('beforeunload', () => {
+            if (scannerSection.style.display !== 'none') {
+                localStorage.setItem('isLoggedIn', 'true');
+            }
+        });
+    </script>
+</body>
+</html>
