@@ -42,14 +42,13 @@
       <!-- Login -->
       <div id="loginBox">
         <label>Usuario</label>
-        <input id="username" placeholder="usuario" value="" autocomplete="username">
+        <input id="username" placeholder="usuario" autocomplete="username">
         <label>Contraseña</label>
         <input id="password" placeholder="contraseña" type="password" autocomplete="current-password">
         <div class="controls">
           <button id="loginBtn">Iniciar sesión</button>
           <button id="loginDemo" class="small">Autocompletar (sonica)</button>
         </div>
-        <p class="muted">Inicia sesión para activar la cámara y comenzar a registrar escaneos.</p>
       </div>
 
       <!-- Scanner area -->
@@ -67,8 +66,6 @@
         <div id="lastLog" style="margin-top:10px"></div>
 
         <h3 style="margin-top:14px">Historial de escaneos</h3>
-        <p class="muted">Se almacena en tu navegador y no se borra al refrescar la página.</p>
-
         <table id="historyTable">
           <thead>
             <tr><th>#</th><th>Tipo</th><th>Número / Texto</th><th>Hora</th><th>Estado</th></tr>
@@ -80,19 +77,10 @@
   </div>
 
 <script>
-/*
- Reglas de parsing:
- - Si el texto escaneado contiene "COVER" (case-insensitive) -> tipo COVER
- - Si contiene "ENTRADA" o "ENTR" -> tipo ENTRADA
- - Si es sólo un número -> ENTRADA con ese número
- - Si tiene formato "COVER:123" o "ENTRADA-123" extrae el número
- - Si no se puede extraer número, guarda texto en campo "numero" como el contenido original
-*/
-
 const AUTH_USER = 'sonica';
 const AUTH_PASS = '232323';
 
-const STORAGE_KEY = 'sonica_scanner_history_v1'; // para persistencia
+const STORAGE_KEY = 'sonica_scanner_history_v1';
 const SET_KEY = 'sonica_scanner_seen_set_v1';
 let seenSet = new Set();
 let history = [];
@@ -106,7 +94,6 @@ const loginBtn = document.getElementById('loginBtn');
 const loginDemo = document.getElementById('loginDemo');
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
-const reader = document.getElementById('reader');
 const startCamBtn = document.getElementById('startCam');
 const stopCamBtn = document.getElementById('stopCam');
 const clearHistoryBtn = document.getElementById('clearHistory');
@@ -115,290 +102,124 @@ const lastLog = document.getElementById('lastLog');
 const historyTableBody = document.querySelector('#historyTable tbody');
 const toggleSoundBtn = document.getElementById('toggleSound');
 
-// --------- Utilidades ----------
+// -------- Persistencia ----------
 function saveState(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
   localStorage.setItem(SET_KEY, JSON.stringify(Array.from(seenSet)));
 }
 function loadState(){
   try{
-    const h = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    history = Array.isArray(h) ? h : [];
-    const s = JSON.parse(localStorage.getItem(SET_KEY) || '[]');
-    seenSet = new Set(Array.isArray(s) ? s : []);
-  }catch(e){
-    history = []; seenSet = new Set();
-  }
+    history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    seenSet = new Set(JSON.parse(localStorage.getItem(SET_KEY) || '[]'));
+  }catch{ history=[]; seenSet=new Set(); }
 }
-function formatDate(ts){ 
-  const d = new Date(ts);
-  return d.toLocaleString();
-}
-function vibrate(ms=200){
-  if(navigator.vibrate) navigator.vibrate(ms);
-}
+
+// -------- Utilidades ----------
+function formatDate(ts){ return new Date(ts).toLocaleString(); }
+function vibrate(ms=200){ if(navigator.vibrate) navigator.vibrate(ms); }
 function beep(){
   if(!soundOn) return;
   try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = 'sine';
-    o.frequency.value = 880;
-    o.connect(g);
-    g.connect(ctx.destination);
-    o.start();
-    g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.12);
-    setTimeout(()=>{ o.stop(); ctx.close(); }, 160);
-  }catch(e){}
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='sine'; o.frequency.value=880;
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime+0.12);
+    setTimeout(()=>{o.stop();ctx.close();},160);
+  }catch{}
 }
+function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;'); }
 
-// --------- Parsing QR ----------
+// -------- Parse QR ----------
 function parseQRText(text){
-  const original = text+''; // string
-  let tipo = 'ENTRADA';
-  let numero = null;
-
-  const t = original.trim();
-
-  // detect cover keyword
-  if(/cover/i.test(t)) tipo = 'COVER';
-  if(/\bentrada\b/i.test(t) || /\bentr/i.test(t)) tipo = 'ENTRADA';
-
-  // try extract number after colon/dash/space
-  let m = t.match(/(?:cover|entrada|entr|ent)?[:\-\s]*#?(\d{1,10})/i);
-  if(m && m[1]) numero = m[1];
-
-  // if no number and the whole string is numeric -> entrada number
-  if(!numero && /^\d+$/.test(t)){
-    numero = t;
-    tipo = 'ENTRADA';
-  }
-
-  // fallback: if nothing detect, keep first 40 chars as numero/text
-  if(!numero) numero = t.length > 40 ? t.slice(0,40) + '...' : t;
-
-  return { tipo, numero, raw: original };
+  const t = (text||"").trim();
+  let tipo="ENTRADA", numero=null;
+  if(/cover/i.test(t)) tipo="COVER";
+  if(/\bentrada\b/i.test(t)||/\bentr/i.test(t)) tipo="ENTRADA";
+  let m = t.match(/(?:cover|entrada|entr)?[:\-\s]*#?(\d{1,10})/i);
+  if(m) numero=m[1];
+  if(!numero && /^\d+$/.test(t)){numero=t; tipo="ENTRADA";}
+  if(!numero) numero=t.length>40?t.slice(0,40)+'...':t;
+  return {tipo,numero,raw:t};
 }
 
-// --------- UI render ----------
+// -------- Render ----------
 function renderHistory(){
-  historyTableBody.innerHTML = '';
-  history.forEach((item, idx) => {
-    const tr = document.createElement('tr');
-    const statusClass = item.duplicado ? 'status-dup' : 'status-unique';
-    tr.innerHTML = `
-      <td>${idx+1}</td>
-      <td>${item.tipo === 'COVER' ? '<span class="type-cover">COVER</span>' : '<span class="type-entrada">ENTRADA</span>'}</td>
-      <td>${escapeHtml(item.numero)}</td>
-      <td>${formatDate(item.ts)}</td>
-      <td class="${statusClass}">${item.duplicado ? 'DOBLE' : 'ÚNICO'}</td>
-    `;
-    historyTableBody.appendChild(tr);
+  historyTableBody.innerHTML='';
+  history.forEach((item,i)=>{
+    historyTableBody.innerHTML += `
+      <tr>
+        <td>${i+1}</td>
+        <td>${item.tipo==='COVER'
+          ?'<span class="type-cover">COVER</span>'
+          :'<span class="type-entrada">ENTRADA</span>'}</td>
+        <td>${escapeHtml(item.numero)}</td>
+        <td>${formatDate(item.ts)}</td>
+        <td class="${item.duplicado?'status-dup':'status-unique'}">${item.duplicado?'DOBLE':'ÚNICO'}</td>
+      </tr>`;
   });
 }
-
-function escapeHtml(s){
-  return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+function showLog(msg,dup=false){
+  lastLog.innerHTML=`<div class="log-message ${dup?'log-dup':'log-ok'}">${msg}</div>`;
 }
 
-function showLog(message, dup=false){
-  lastLog.innerHTML = '';
-  const div = document.createElement('div');
-  div.className = 'log-message ' + (dup ? 'log-dup' : 'log-ok');
-  div.innerText = message;
-  lastLog.appendChild(div);
+// -------- Manejo escaneo ----------
+function onDecodedText(decodedText){
+  const p=parseQRText(decodedText);
+  const key=`${p.tipo}::${p.numero}`;
+  const isDup=seenSet.has(key);
+  const entry={...p, ts:Date.now(), duplicado:isDup};
+  history.unshift(entry);
+  if(!isDup){ seenSet.add(key); showLog(`OK — ${p.tipo} ${p.numero}`); beep();}
+  else{ showLog(`DUPLICADO — ${p.tipo} ${p.numero}`,true); vibrate(250);}
+  saveState(); renderHistory();
 }
 
-// --------- Scan handler ----------
-function onDecodedText(decodedText, decodedResult){
-  // parsed
-  const p = parseQRText(decodedText);
-  const key = `${p.tipo}::${p.numero}`; // clave para duplicado
-  const isDup = seenSet.has(key);
-
-  const entry = {
-    tipo: p.tipo,
-    numero: p.numero,
-    raw: p.raw,
-    ts: Date.now(),
-    duplicado: isDup
-  };
-
-  // if not duplicate, add to seen set
-  if(!isDup){
-    seenSet.add(key);
-    history.unshift(entry);
-    showLog(`OK — ${p.tipo} ${p.numero}`, false);
-    beep();
-  } else {
-    // mark duplicate in history as well (add entry but show duplicado)
-    history.unshift(entry);
-    showLog(`DUPLICADO — ${p.tipo} ${p.numero}`, true);
-    vibrate(250);
-    // strong beep for duplicate
-    if(soundOn){
-      try{
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = 'square';
-        o.frequency.value = 220;
-        o.connect(g); g.connect(ctx.destination);
-        o.start();
-        g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.3);
-        setTimeout(()=>{ o.stop(); ctx.close(); }, 350);
-      }catch(e){}
-    }
-  }
-
-  // persist and refresh UI
-  saveState();
-  renderHistory();
-
-  // Optional: if you want to stop camera after each scan, uncomment:
-  // stopCamera();
-}
-
-// --------- Camera control ----------
+// -------- Cámara ----------
 async function startCamera(){
   if(scanning) return;
-  html5Scanner = new Html5Qrcode(/* element id */ "reader", { verbose: false });
-  const config = { fps: 20, qrbox: { width: 280, height: 200 }, disableFlip: false };
-
+  html5Scanner=new Html5Qrcode("reader",{verbose:true});
+  const config={fps:15, qrbox:{width:250,height:250}};
   try{
-    // request camera permission & start camera
-    await html5Scanner.start(
-      { facingMode: "environment" },
-      config,
-      onDecodedText
-    );
-    scanning = true;
-    startCamBtn.disabled = true;
-    stopCamBtn.disabled = false;
-    showLog('Cámara abierta. Escanea códigos QR ahora.');
-  }catch(err){
-    console.error('Error al iniciar cámara:', err);
-    showLog('Error al abrir la cámara: ' + (err && err.message ? err.message : String(err)), true);
-  }
+    const devices=await Html5Qrcode.getCameras();
+    if(devices.length){
+      const camId=devices.length>1?devices[devices.length-1].id:devices[0].id;
+      await html5Scanner.start({deviceId:{exact:camId}},config,onDecodedText);
+      scanning=true;
+      startCamBtn.disabled=true; stopCamBtn.disabled=false;
+      showLog("✅ Cámara abierta. Escanea un QR.");
+    }else showLog("❌ No se encontraron cámaras.",true);
+  }catch(err){ console.error(err); showLog("⚠️ Error al abrir cámara: "+err,true); }
 }
-
 async function stopCamera(){
-  if(!scanning || !html5Scanner) return;
-  try{
-    await html5Scanner.stop();
-    await html5Scanner.clear();
-  }catch(e){ console.warn(e); }
-  scanning = false;
-  startCamBtn.disabled = false;
-  stopCamBtn.disabled = true;
-  showLog('Cámara detenida.');
+  if(!scanning) return;
+  await html5Scanner.stop(); await html5Scanner.clear();
+  scanning=false; startCamBtn.disabled=false; stopCamBtn.disabled=true;
+  showLog("Cámara detenida.");
 }
 
-// --------- Export PDF ----------
+// -------- PDF ----------
 async function exportPdf(){
-  if(history.length === 0){
-    alert('No hay escaneos para exportar.');
-    return;
-  }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({
-    orientation: "portrait",
-    unit: "pt",
-    format: "a4"
-  });
-
-  doc.setFontSize(14);
-  doc.text('Historial de escaneos - Sonica', 40, 50);
-  doc.setFontSize(10);
-  doc.text(`Generado: ${new Date().toLocaleString()}`, 40, 68);
-
-  // table header
-  const startY = 92;
-  const rowHeight = 18;
-  let y = startY;
-  doc.setFontSize(10);
-  doc.text('#', 40, y);
-  doc.text('Tipo', 70, y);
-  doc.text('Número / Texto', 140, y);
-  doc.text('Hora', 360, y);
-  doc.text('Estado', 480, y);
-  y += rowHeight;
-
-  // limit rows per page
-  const rowsPerPage = 38;
-  let rowCount = 0;
-  for(let i=0;i<history.length;i++){
-    const item = history[i];
-    if(rowCount >= rowsPerPage){
-      doc.addPage();
-      y = 60;
-      rowCount = 0;
-    }
-    doc.text(String(i+1), 40, y);
-    doc.text(item.tipo, 70, y);
-    // número posiblemente largo -> truncar
-    const numText = String(item.numero).length > 40 ? String(item.numero).slice(0,40)+'...' : String(item.numero);
-    doc.text(numText, 140, y);
-    doc.text(new Date(item.ts).toLocaleString(), 360, y);
-    doc.text(item.duplicado ? 'DOBLE' : 'ÚNICO', 480, y);
-    y += rowHeight;
-    rowCount++;
-  }
-
-  // Nombre de archivo con fecha
-  const filename = `historial-escaneos-sonica-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`;
-  doc.save(filename);
+  if(!history.length){alert("No hay datos");return;}
+  const {jsPDF}=window.jspdf; const doc=new jsPDF();
+  doc.setFontSize(14); doc.text("Historial de escaneos - Sonica",40,40);
+  let y=70; doc.setFontSize(10);
+  history.forEach((h,i)=>{doc.text(`${i+1}. ${h.tipo} ${h.numero} | ${formatDate(h.ts)} | ${h.duplicado?"DOBLE":"ÚNICO"}`,40,y); y+=14; if(y>780){doc.addPage();y=40;}});
+  doc.save("historial-sonica.pdf");
 }
 
-// --------- Events ----------
-loginBtn.addEventListener('click', ()=>{
-  const u = usernameInput.value.trim();
-  const p = passwordInput.value.trim();
-  if(u === AUTH_USER && p === AUTH_PASS){
-    loginBox.style.display = 'none';
-    scannerArea.style.display = 'block';
-    // load state and show
-    loadState();
-    renderHistory();
-    // abrir cámara automáticamente
-    startCamera();
-  } else {
-    alert('Usuario o contraseña incorrectos.');
-  }
-});
-
-loginDemo.addEventListener('click', ()=>{
-  usernameInput.value = AUTH_USER;
-  passwordInput.value = AUTH_PASS;
-});
-
-startCamBtn.addEventListener('click', startCamera);
-stopCamBtn.addEventListener('click', stopCamera);
-
-clearHistoryBtn.addEventListener('click', ()=>{
-  if(!confirm('¿Borrar todo el historial de escaneos? Esta acción no se puede deshacer.')) return;
-  history = [];
-  seenSet = new Set();
-  saveState();
-  renderHistory();
-  showLog('Historial borrado.');
-});
-
-exportPdfBtn.addEventListener('click', exportPdf);
-
-toggleSoundBtn.addEventListener('click', ()=>{
-  soundOn = !soundOn;
-  toggleSoundBtn.innerText = `Sonido: ${soundOn ? 'ON' : 'OFF'}`;
-});
-
-// on load: check if already authenticated in this session (simple)
-window.addEventListener('load', ()=>{
-  // if previously logged in during the same tab session (simple flag)
-  // Not required; start at login.
-  loadState();
-  renderHistory();
-});
+// -------- Eventos ----------
+loginBtn.onclick=()=>{
+  if(usernameInput.value.trim()===AUTH_USER && passwordInput.value.trim()===AUTH_PASS){
+    loginBox.style.display='none'; scannerArea.style.display='block';
+    loadState(); renderHistory(); startCamera();
+  }else alert("Usuario o contraseña incorrectos");
+};
+loginDemo.onclick=()=>{usernameInput.value=AUTH_USER; passwordInput.value=AUTH_PASS;};
+startCamBtn.onclick=startCamera; stopCamBtn.onclick=stopCamera;
+clearHistoryBtn.onclick=()=>{ if(confirm("¿Borrar historial?")){history=[];seenSet=new Set();saveState();renderHistory();showLog("Historial borrado.");}};
+exportPdfBtn.onclick=exportPdf;
+toggleSoundBtn.onclick=()=>{soundOn=!soundOn; toggleSoundBtn.innerText=`Sonido: ${soundOn?"ON":"OFF"}`;};
 </script>
 </body>
 </html>
