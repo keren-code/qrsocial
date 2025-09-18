@@ -31,6 +31,8 @@
     .log-message{padding:8px;border-radius:8px;margin-top:8px}
     .log-dup{background:rgba(239,68,68,0.12);color:#fff}
     .log-ok{background:rgba(16,185,129,0.08);color:#eafff5}
+    .loading{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-radius:50%;border-top-color:#fff;animation:spin 1s linear infinite;margin-left:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
   </style>
 </head>
 <body>
@@ -82,11 +84,13 @@ const AUTH_PASS = '232323';
 
 const STORAGE_KEY = 'sonica_scanner_history_v1';
 const SET_KEY = 'sonica_scanner_seen_set_v1';
+const SESSION_KEY = 'sonica_scanner_session_v1'; // Nueva clave para la sesión
 let seenSet = new Set();
 let history = [];
 let html5Scanner = null;
 let scanning = false;
 let soundOn = true;
+let currentCameraId = null; // Almacenar ID de cámara actual
 
 const loginBox = document.getElementById('loginBox');
 const scannerArea = document.getElementById('scannerArea');
@@ -107,11 +111,54 @@ function saveState(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
   localStorage.setItem(SET_KEY, JSON.stringify(Array.from(seenSet)));
 }
+
+// Guardar estado de sesión
+function saveSessionState() {
+  const sessionData = {
+    loggedIn: true,
+    cameraActive: scanning,
+    cameraId: currentCameraId,
+    soundOn: soundOn
+  };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+}
+
 function loadState(){
   try{
     history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     seenSet = new Set(JSON.parse(localStorage.getItem(SET_KEY) || '[]'));
-  }catch{ history=[]; seenSet=new Set(); }
+    
+    // Cargar estado de sesión
+    const sessionData = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}');
+    if (sessionData.loggedIn) {
+      // Ocultar login y mostrar scanner
+      loginBox.style.display = 'none';
+      scannerArea.style.display = 'block';
+      
+      // Restaurar configuración de sonido
+      soundOn = sessionData.soundOn !== undefined ? sessionData.soundOn : true;
+      toggleSoundBtn.innerText = `Sonido: ${soundOn ? "ON" : "OFF"}`;
+      
+      // Si la cámara estaba activa, intentar reconectar
+      if (sessionData.cameraActive) {
+        currentCameraId = sessionData.cameraId;
+        setTimeout(() => {
+          startCamera(true); // true = reconexión automática
+        }, 500);
+      } else {
+        renderHistory();
+      }
+    }
+  } catch(e) { 
+    console.error("Error loading state:", e);
+    history = []; 
+    seenSet = new Set(); 
+  }
+}
+
+// Limpiar estado de sesión al cerrar sesión
+function clearSessionState() {
+  localStorage.removeItem(SESSION_KEY);
 }
 
 // -------- Utilidades ----------
@@ -176,25 +223,82 @@ function onDecodedText(decodedText){
 }
 
 // -------- Cámara ----------
-async function startCamera(){
+async function startCamera(isReconnecting = false){
   if(scanning) return;
-  html5Scanner=new Html5Qrcode("reader",{verbose:true});
-  const config={fps:15, qrbox:{width:250,height:250}};
-  try{
-    const devices=await Html5Qrcode.getCameras();
-    if(devices.length){
-      const camId=devices.length>1?devices[devices.length-1].id:devices[0].id;
-      await html5Scanner.start({deviceId:{exact:camId}},config,onDecodedText);
-      scanning=true;
-      startCamBtn.disabled=true; stopCamBtn.disabled=false;
+  
+  // Mostrar indicador de carga
+  if (!isReconnecting) {
+    showLog("🔄 Iniciando cámara... <span class='loading'></span>");
+  } else {
+    showLog("🔄 Reconectando cámara... <span class='loading'></span>");
+  }
+  
+  html5Scanner = new Html5Qrcode("reader", {verbose: false});
+  const config = {fps: 15, qrbox: {width: 250, height: 250}};
+  
+  try {
+    const devices = await Html5Qrcode.getCameras();
+    if (devices.length) {
+      let camId;
+      
+      // Priorizar la cámara usada previamente si está disponible
+      if (currentCameraId) {
+        const previousCamera = devices.find(d => d.id === currentCameraId);
+        if (previousCamera) {
+          camId = previousCamera.id;
+        } else {
+          // Usar la cámara trasera por defecto si está disponible
+          const backCamera = devices.find(d => d.label.toLowerCase().includes('back'));
+          camId = backCamera ? backCamera.id : devices[0].id;
+        }
+      } else {
+        // Usar la cámara trasera por defecto si está disponible
+        const backCamera = devices.find(d => d.label.toLowerCase().includes('back'));
+        camId = backCamera ? backCamera.id : devices[0].id;
+      }
+      
+      currentCameraId = camId;
+      await html5Scanner.start({deviceId: {exact: camId}}, config, onDecodedText);
+      scanning = true;
+      startCamBtn.disabled = true; 
+      stopCamBtn.disabled = false;
+      
+      // Guardar estado de sesión
+      saveSessionState();
+      
       showLog("✅ Cámara abierta. Escanea un QR.");
-    }else showLog("❌ No se encontraron cámaras.",true);
-  }catch(err){ console.error(err); showLog("⚠️ Error al abrir cámara: "+err,true); }
+    } else {
+      showLog("❌ No se encontraron cámaras.", true);
+    }
+  } catch(err) { 
+    console.error("Camera error:", err); 
+    showLog("⚠️ Error al abrir cámara: " + err.message, true);
+    scanning = false;
+    startCamBtn.disabled = false; 
+    stopCamBtn.disabled = true;
+    
+    // Si estamos reconectando y falla, intentar de nuevo después de un tiempo
+    if (isReconnecting) {
+      setTimeout(() => startCamera(true), 2000);
+    }
+  }
 }
+
 async function stopCamera(){
   if(!scanning) return;
-  await html5Scanner.stop(); await html5Scanner.clear();
-  scanning=false; startCamBtn.disabled=false; stopCamBtn.disabled=true;
+  try {
+    await html5Scanner.stop(); 
+    await html5Scanner.clear();
+  } catch (e) {
+    console.warn("Error stopping camera:", e);
+  }
+  scanning = false; 
+  startCamBtn.disabled = false; 
+  stopCamBtn.disabled = true;
+  
+  // Guardar estado de sesión
+  saveSessionState();
+  
   showLog("Cámara detenida.");
 }
 
@@ -209,17 +313,55 @@ async function exportPdf(){
 }
 
 // -------- Eventos ----------
-loginBtn.onclick=()=>{
-  if(usernameInput.value.trim()===AUTH_USER && passwordInput.value.trim()===AUTH_PASS){
-    loginBox.style.display='none'; scannerArea.style.display='block';
-    loadState(); renderHistory(); startCamera();
-  }else alert("Usuario o contraseña incorrectos");
+loginBtn.onclick = () => {
+  if(usernameInput.value.trim() === AUTH_USER && passwordInput.value.trim() === AUTH_PASS){
+    loginBox.style.display = 'none'; 
+    scannerArea.style.display = 'block';
+    loadState(); 
+    startCamera();
+    
+    // Guardar estado de sesión
+    saveSessionState();
+  } else {
+    alert("Usuario o contraseña incorrectos");
+  }
 };
-loginDemo.onclick=()=>{usernameInput.value=AUTH_USER; passwordInput.value=AUTH_PASS;};
-startCamBtn.onclick=startCamera; stopCamBtn.onclick=stopCamera;
-clearHistoryBtn.onclick=()=>{ if(confirm("¿Borrar historial?")){history=[];seenSet=new Set();saveState();renderHistory();showLog("Historial borrado.");}};
-exportPdfBtn.onclick=exportPdf;
-toggleSoundBtn.onclick=()=>{soundOn=!soundOn; toggleSoundBtn.innerText=`Sonido: ${soundOn?"ON":"OFF"}`;};
+
+loginDemo.onclick = () => {
+  usernameInput.value = AUTH_USER; 
+  passwordInput.value = AUTH_PASS;
+};
+
+startCamBtn.onclick = () => startCamera(); 
+stopCamBtn.onclick = stopCamera;
+
+clearHistoryBtn.onclick = () => { 
+  if(confirm("¿Borrar historial?")) {
+    history = [];
+    seenSet = new Set();
+    saveState();
+    renderHistory();
+    showLog("Historial borrado.");
+  }
+};
+
+exportPdfBtn.onclick = exportPdf;
+
+toggleSoundBtn.onclick = () => {
+  soundOn = !soundOn; 
+  toggleSoundBtn.innerText = `Sonido: ${soundOn?"ON":"OFF"}`;
+  saveSessionState();
+};
+
+// Limpiar el estado al cerrar la página
+window.addEventListener('beforeunload', () => {
+  if (!scanning) {
+    clearSessionState();
+  }
+});
+
+// Inicializar la aplicación
+document.addEventListener('DOMContentLoaded', loadState);
 </script>
 </body>
 </html>
