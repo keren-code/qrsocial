@@ -970,8 +970,7 @@
         loginBox.style.display = 'none'; 
         scannerArea.style.display = 'block';
         loadState();
-        
-        // Guardar estado de sesión
+        setTimeout(() => startCamera(true), 500); // <-- fuerza inicio cámara
         saveSessionState();
       } else {
         alert("Usuario o contraseña incorrectos");
@@ -1057,6 +1056,11 @@
     window.addEventListener('beforeunload', function() {
       saveSessionState();
     });
+
+    // Advertencia si no está en servidor web
+    if (location.protocol === "file:") {
+      alert("⚠️ Para que la cámara funcione, abre este archivo usando un servidor local (por ejemplo, Live Server en VS Code o python -m http.server). Los navegadores no permiten acceder a la cámara desde archivos locales.");
+    }
   </script>
 </body>
 </html>
