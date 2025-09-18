@@ -1,439 +1,404 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escáner QR con Validación</title>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        
-        .scanner-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        #video-container {
-            position: relative;
-            width: 100%;
-            max-width: 500px;
-            margin-bottom: 20px;
-        }
-        
-        #video {
-            width: 100%;
-            border-radius: 8px;
-            background-color: #000;
-        }
-        
-        #scan-region {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 70%;
-            height: 200px;
-            border: 2px solid #fff;
-            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-        }
-        
-        .scanner-controls {
-            margin-bottom: 20px;
-        }
-        
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 5px;
-            transition: background-color 0.3s;
-        }
-        
-        button:hover {
-            background-color: #2980b9;
-        }
-        
-        button:disabled {
-            background-color: #95a5a6;
-            cursor: not-allowed;
-        }
-        
-        #btn-export {
-            background-color: #27ae60;
-        }
-        
-        #btn-export:hover {
-            background-color: #219653;
-        }
-        
-        .status {
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: bold;
-        }
-        
-        .status.scanning {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .status.success {
-            background-color: #4CAF50;
-            color: white;
-            animation: pulse 0.5s;
-        }
-        
-        .status.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            animation: shake 0.5s;
-        }
-        
-        .scanned-list {
-            margin-top: 20px;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        
-        .scanned {
-            color: #27ae60;
-        }
-        
-        .duplicate {
-            color: #e74c3c;
-        }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            th, td {
-                padding: 8px 10px;
-                font-size: 14px;
-            }
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Escáner QR - Sonica</title>
+
+  <!-- html5-qrcode (escaneo) -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+  <!-- jsPDF (export PDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; padding:16px; background:#0f172a; color:#e6eef8;}
+    .container{max-width:980px;margin:0 auto;}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); padding:16px; border-radius:12px; box-shadow:0 4px 18px rgba(2,6,23,0.6);}
+    h1{margin:0 0 8px 0;font-size:20px}
+    label{display:block;margin-top:8px;font-size:13px}
+    input{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;width:100%}
+    button{margin-top:8px;padding:10px 12px;border-radius:10px;border:0;background:#06b6d4;color:#041124;cursor:pointer;font-weight:600}
+    .muted{color:#99a3b5;font-size:13px}
+    #reader{width:100%;min-height:320px;border-radius:10px;overflow:hidden;background:#000}
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left}
+    .status-unique{color:#10b981;font-weight:700}
+    .status-dup{color:#ef4444;font-weight:800}
+    .type-cover{background:#222C3A;color:#ffd; padding:4px 8px;border-radius:8px;display:inline-block}
+    .type-entrada{background:#122a2f;color:#dff; padding:4px 8px;border-radius:8px;display:inline-block}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .small{font-size:12px;padding:6px 8px}
+    .log-message{padding:8px;border-radius:8px;margin-top:8px}
+    .log-dup{background:rgba(239,68,68,0.12);color:#fff}
+    .log-ok{background:rgba(16,185,129,0.08);color:#eafff5}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Escáner QR con Validación</h1>
-            <p>Escanea códigos QR y verifica si ya han sido escaneados previamente</p>
-        </header>
-        
-        <div class="scanner-container">
-            <div id="video-container">
-                <video id="video" playsinline></video>
-                <div id="scan-region"></div>
-            </div>
-            
-            <div class="scanner-controls">
-                <button id="btn-start">Iniciar Escáner</button>
-                <button id="btn-stop" disabled>Detener Escáner</button>
-                <button id="btn-export">Exportar a PDF</button>
-            </div>
-            
-            <div id="status" class="status scanning">Preparado para escanear</div>
+  <div class="container">
+    <div class="card">
+      <h1>Escáner QR — Sonica</h1>
+      <p class="muted">Usuario: <strong>sonica</strong> — Contraseña: <strong>232323</strong></p>
+
+      <!-- Login -->
+      <div id="loginBox">
+        <label>Usuario</label>
+        <input id="username" placeholder="usuario" value="" autocomplete="username">
+        <label>Contraseña</label>
+        <input id="password" placeholder="contraseña" type="password" autocomplete="current-password">
+        <div class="controls">
+          <button id="loginBtn">Iniciar sesión</button>
+          <button id="loginDemo" class="small">Autocompletar (sonica)</button>
         </div>
-        
-        <div class="scanned-list">
-            <h2>Registro de Escaneos</h2>
-            <table id="scanned-table">
-                <thead>
-                    <tr>
-                        <th>Número</th>
-                        <th>Fecha y Hora</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Los registros se agregarán aquí dinámicamente -->
-                </tbody>
-            </table>
+        <p class="muted">Inicia sesión para activar la cámara y comenzar a registrar escaneos.</p>
+      </div>
+
+      <!-- Scanner area -->
+      <div id="scannerArea" style="display:none">
+        <div id="reader"></div>
+
+        <div class="controls">
+          <button id="startCam">Abrir cámara</button>
+          <button id="stopCam" disabled>Detener cámara</button>
+          <button id="clearHistory" class="small">Borrar historial</button>
+          <button id="exportPdf" class="small">Descargar PDF</button>
+          <button id="toggleSound" class="small">Sonido: ON</button>
         </div>
+
+        <div id="lastLog" style="margin-top:10px"></div>
+
+        <h3 style="margin-top:14px">Historial de escaneos</h3>
+        <p class="muted">Se almacena en tu navegador y no se borra al refrescar la página.</p>
+
+        <table id="historyTable">
+          <thead>
+            <tr><th>#</th><th>Tipo</th><th>Número / Texto</th><th>Hora</th><th>Estado</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
+  </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Variables globales
-            const video = document.getElementById('video');
-            const startBtn = document.getElementById('btn-start');
-            const stopBtn = document.getElementById('btn-stop');
-            const exportBtn = document.getElementById('btn-export');
-            const statusDiv = document.getElementById('status');
-            const tableBody = document.querySelector('#scanned-table tbody');
-            
-            let scanning = false;
-            let stream = null;
-            let scannedCodes = new Set(); // Para verificar códigos únicos
-            let scannedData = []; // Para almacenar todos los datos escaneados
-            
-            // Sonidos (codificados en base64 para evitar archivos externos)
-            const successSound = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbVtfdJivrJBhNjVgodDbq2EcBStztfLNjFgoETaEt+LJgVQhCSx9tNnDdEweBSt6r9G9bEkbBDB1q8u4aEQZBDJ0qcm2ZkMYBTN1qMq3aEQYBTR2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBjV2qMm2Z0QZBj极音");
-            const errorSound = new Audio("data:audio/wav;base64,UklGRqQGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YYAGAACAgIF9e3l4eHl7gISHiYuLiYF3b2VfW1xeYGRqcnmCio6QjIR2ZFhMRD07PkFGTFddZGx0fIWMkZOSjIFwX1RMPDYxLzE0OD9JUVlmbnd+goF5bGRdWVhZXGFobXZ9hYyRlpiWj4V6cGZhXFtaWltdYGRrcnp/goiMkJKTlJOOhnx1cGxqaWlqbXB0eX+EiY2Pj42Lh4B6dXFwbm5vcHJ1eX2BhImMj5GQjomEfXh0cW9vbm9wcnR3e36ChYiLjI2OjYuIhIB7eHVzcXBvcHJ1eHyAg4aJiouMi4mGg357eHZ1dHNzc3V3e36BhIaIioqKiYeEgH57eXd2dXR0dXd5fH+ChIWHiIiIh4WDgX99e3l4d3Z2dnd5fH6Ag4SFhoeHhoWDgn9+fHp5eHh4eHl6fH6AgYKEhIWFhYSDgoGAfnx7enl5eXl6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhISDgoGAf357e3p6enp6e31+gIGCg4SEhIS极音");
+<script>
+/*
+ Reglas de parsing:
+ - Si el texto escaneado contiene "COVER" (case-insensitive) -> tipo COVER
+ - Si contiene "ENTRADA" o "ENTR" -> tipo ENTRADA
+ - Si es sólo un número -> ENTRADA con ese número
+ - Si tiene formato "COVER:123" o "ENTRADA-123" extrae el número
+ - Si no se puede extraer número, guarda texto en campo "numero" como el contenido original
+*/
 
-            // Inicializar la cámara
-            startBtn.addEventListener('click', initCamera);
-            stopBtn.addEventListener('click', stopCamera);
-            exportBtn.addEventListener('click', exportToPDF);
+const AUTH_USER = 'sonica';
+const AUTH_PASS = '232323';
 
-            // Función para inicializar la cámara
-            async function initCamera() {
-                try {
-                    statusDiv.textContent = "Iniciando cámara...";
-                    statusDiv.className = "status scanning";
-                    
-                    stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: "environment" } 
-                    });
-                    
-                    video.srcObject = stream;
-                    video.setAttribute("playsinline", true);
-                    video.play();
-                    
-                    startBtn.disabled = true;
-                    stopBtn.disabled = false;
-                    scanning = true;
-                    
-                    statusDiv.textContent = "Escaneando...";
-                    requestAnimationFrame(tick);
-                    
-                } catch (error) {
-                    console.error("Error al acceder a la cámara:", error);
-                    statusDiv.textContent = "Error al acceder a la cámara: " + error.message;
-                    statusDiv.className = "status error";
-                }
-            }
+const STORAGE_KEY = 'sonica_scanner_history_v1'; // para persistencia
+const SET_KEY = 'sonica_scanner_seen_set_v1';
+let seenSet = new Set();
+let history = [];
+let html5Scanner = null;
+let scanning = false;
+let soundOn = true;
 
-            // Función para detener la cámara
-            function stopCamera() {
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                    stream = null;
-                }
-                
-                scanning = false;
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
-                
-                statusDiv.textContent = "Cámara detenida";
-                statusDiv.className = "status";
-            }
+const loginBox = document.getElementById('loginBox');
+const scannerArea = document.getElementById('scannerArea');
+const loginBtn = document.getElementById('loginBtn');
+const loginDemo = document.getElementById('loginDemo');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const reader = document.getElementById('reader');
+const startCamBtn = document.getElementById('startCam');
+const stopCamBtn = document.getElementById('stopCam');
+const clearHistoryBtn = document.getElementById('clearHistory');
+const exportPdfBtn = document.getElementById('exportPdf');
+const lastLog = document.getElementById('lastLog');
+const historyTableBody = document.querySelector('#historyTable tbody');
+const toggleSoundBtn = document.getElementById('toggleSound');
 
-            // Función principal de escaneo
-            function tick() {
-                if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    const context = canvas.getContext('2d');
-                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    
-                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height);
-                    
-                    if (code) {
-                        processScannedCode(code.data);
-                    }
-                }
-                
-                if (scanning) {
-                    requestAnimationFrame(tick);
-                }
-            }
+// --------- Utilidades ----------
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  localStorage.setItem(SET_KEY, JSON.stringify(Array.from(seenSet)));
+}
+function loadState(){
+  try{
+    const h = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    history = Array.isArray(h) ? h : [];
+    const s = JSON.parse(localStorage.getItem(SET_KEY) || '[]');
+    seenSet = new Set(Array.isArray(s) ? s : []);
+  }catch(e){
+    history = []; seenSet = new Set();
+  }
+}
+function formatDate(ts){ 
+  const d = new Date(ts);
+  return d.toLocaleString();
+}
+function vibrate(ms=200){
+  if(navigator.vibrate) navigator.vibrate(ms);
+}
+function beep(){
+  if(!soundOn) return;
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 880;
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.12);
+    setTimeout(()=>{ o.stop(); ctx.close(); }, 160);
+  }catch(e){}
+}
 
-            // Procesar el código escaneado
-            function processScannedCode(code) {
-                // Detener temporalmente el escaneo para evitar múltiples lecturas
-                scanning = false;
-                
-                const now = new Date();
-                const dateTime = now.toLocaleString();
-                
-                // Verificar si el código ya fue escaneado
-                if (scannedCodes.has(code)) {
-                    // Código duplicado
-                    statusDiv.textContent = "¡Código ya escaneado!";
-                    statusDiv.className = "status error";
-                    
-                    // Vibrar
-                    if (navigator.vibrate) {
-                        navigator.vibrate(300);
-                    }
-                    
-                    // Sonido de error
-                    errorSound.play();
-                    
-                    // Reanudar escaneo después de un breve retraso
-                    setTimeout(() => {
-                        scanning = true;
-                        requestAnimationFrame(tick);
-                    }, 2000);
-                    
-                    return;
-                }
-                
-                // Código nuevo
-                scannedCodes.add(code);
-                scannedData.push({
-                    code: code,
-                    timestamp: now,
-                    dateTime: dateTime,
-                    status: "Escaneado"
-                });
-                
-                // Actualizar la tabla
-                updateScannedTable();
-                
-                // Feedback visual y auditivo
-                statusDiv.textContent = "¡Código escaneado correctamente!";
-                statusDiv.className = "status success";
-                successSound.play();
-                
-                // Reanudar escaneo después de un breve retraso
-                setTimeout(() => {
-                    scanning = true;
-                    statusDiv.textContent = "Escaneando...";
-                    statusDiv.className = "status scanning";
-                    requestAnimationFrame(tick);
-                }, 1500);
-            }
+// --------- Parsing QR ----------
+function parseQRText(text){
+  const original = text+''; // string
+  let tipo = 'ENTRADA';
+  let numero = null;
 
-            // Actualizar la tabla de códigos escaneados
-            function updateScannedTable() {
-                // Limpiar la tabla
-                tableBody.innerHTML = '';
-                
-                // Agregar filas para cada código escaneado
-                scannedData.forEach(item => {
-                    const row = document.createElement('tr');
-                    
-                    const codeCell = document.createElement('td');
-                    codeCell.textContent = item.code;
-                    
-                    const dateCell = document.createElement('td');
-                    dateCell.textContent = item.dateTime;
-                    
-                    const statusCell = document.createElement('td');
-                    statusCell.textContent = item.status;
-                    statusCell.className = "scanned";
-                    
-                    row.appendChild(codeCell);
-                    row.appendChild(dateCell);
-                    row.appendChild(statusCell);
-                    
-                    tableBody.appendChild(row);
-                });
-            }
+  const t = original.trim();
 
-            // Exportar a PDF
-            function exportToPDF() {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                // Título
-                doc.setFontSize(20);
-                doc.text("Registro de Códigos QR Escaneados", 14, 15);
-                
-                // Fecha de exportación
-                doc.setFontSize(12);
-                doc.text(`Exportado: ${new Date().toLocaleString()}`, 14, 25);
-                
-                // Datos de la tabla
-                const tableData = scannedData.map(item => [
-                    item.code,
-                    item.dateTime,
-                    item.status
-                ]);
-                
-                // Crear tabla
-                doc.autoTable({
-                    head: [['Código', 'Fecha y Hora', 'Estado']],
-                    body: tableData,
-                    startY: 30,
-                    styles: { fontSize: 10 },
-                    headStyles: { fillColor: [52, 152, 219] }
-                });
-                
-                // Guardar PDF
-                doc.save('registro_qr_escaneados.pdf');
-            }
-        });
-    </script>
+  // detect cover keyword
+  if(/cover/i.test(t)) tipo = 'COVER';
+  if(/\bentrada\b/i.test(t) || /\bentr/i.test(t)) tipo = 'ENTRADA';
+
+  // try extract number after colon/dash/space
+  let m = t.match(/(?:cover|entrada|entr|ent)?[:\-\s]*#?(\d{1,10})/i);
+  if(m && m[1]) numero = m[1];
+
+  // if no number and the whole string is numeric -> entrada number
+  if(!numero && /^\d+$/.test(t)){
+    numero = t;
+    tipo = 'ENTRADA';
+  }
+
+  // fallback: if nothing detect, keep first 40 chars as numero/text
+  if(!numero) numero = t.length > 40 ? t.slice(0,40) + '...' : t;
+
+  return { tipo, numero, raw: original };
+}
+
+// --------- UI render ----------
+function renderHistory(){
+  historyTableBody.innerHTML = '';
+  history.forEach((item, idx) => {
+    const tr = document.createElement('tr');
+    const statusClass = item.duplicado ? 'status-dup' : 'status-unique';
+    tr.innerHTML = `
+      <td>${idx+1}</td>
+      <td>${item.tipo === 'COVER' ? '<span class="type-cover">COVER</span>' : '<span class="type-entrada">ENTRADA</span>'}</td>
+      <td>${escapeHtml(item.numero)}</td>
+      <td>${formatDate(item.ts)}</td>
+      <td class="${statusClass}">${item.duplicado ? 'DOBLE' : 'ÚNICO'}</td>
+    `;
+    historyTableBody.appendChild(tr);
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
+function showLog(message, dup=false){
+  lastLog.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'log-message ' + (dup ? 'log-dup' : 'log-ok');
+  div.innerText = message;
+  lastLog.appendChild(div);
+}
+
+// --------- Scan handler ----------
+function onDecodedText(decodedText, decodedResult){
+  // parsed
+  const p = parseQRText(decodedText);
+  const key = `${p.tipo}::${p.numero}`; // clave para duplicado
+  const isDup = seenSet.has(key);
+
+  const entry = {
+    tipo: p.tipo,
+    numero: p.numero,
+    raw: p.raw,
+    ts: Date.now(),
+    duplicado: isDup
+  };
+
+  // if not duplicate, add to seen set
+  if(!isDup){
+    seenSet.add(key);
+    history.unshift(entry);
+    showLog(`OK — ${p.tipo} ${p.numero}`, false);
+    beep();
+  } else {
+    // mark duplicate in history as well (add entry but show duplicado)
+    history.unshift(entry);
+    showLog(`DUPLICADO — ${p.tipo} ${p.numero}`, true);
+    vibrate(250);
+    // strong beep for duplicate
+    if(soundOn){
+      try{
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'square';
+        o.frequency.value = 220;
+        o.connect(g); g.connect(ctx.destination);
+        o.start();
+        g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.3);
+        setTimeout(()=>{ o.stop(); ctx.close(); }, 350);
+      }catch(e){}
+    }
+  }
+
+  // persist and refresh UI
+  saveState();
+  renderHistory();
+
+  // Optional: if you want to stop camera after each scan, uncomment:
+  // stopCamera();
+}
+
+// --------- Camera control ----------
+async function startCamera(){
+  if(scanning) return;
+  html5Scanner = new Html5Qrcode(/* element id */ "reader", { verbose: false });
+  const config = { fps: 20, qrbox: { width: 280, height: 200 }, disableFlip: false };
+
+  try{
+    // request camera permission & start camera
+    await html5Scanner.start(
+      { facingMode: "environment" },
+      config,
+      onDecodedText
+    );
+    scanning = true;
+    startCamBtn.disabled = true;
+    stopCamBtn.disabled = false;
+    showLog('Cámara abierta. Escanea códigos QR ahora.');
+  }catch(err){
+    console.error('Error al iniciar cámara:', err);
+    showLog('Error al abrir la cámara: ' + (err && err.message ? err.message : String(err)), true);
+  }
+}
+
+async function stopCamera(){
+  if(!scanning || !html5Scanner) return;
+  try{
+    await html5Scanner.stop();
+    await html5Scanner.clear();
+  }catch(e){ console.warn(e); }
+  scanning = false;
+  startCamBtn.disabled = false;
+  stopCamBtn.disabled = true;
+  showLog('Cámara detenida.');
+}
+
+// --------- Export PDF ----------
+async function exportPdf(){
+  if(history.length === 0){
+    alert('No hay escaneos para exportar.');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "pt",
+    format: "a4"
+  });
+
+  doc.setFontSize(14);
+  doc.text('Historial de escaneos - Sonica', 40, 50);
+  doc.setFontSize(10);
+  doc.text(`Generado: ${new Date().toLocaleString()}`, 40, 68);
+
+  // table header
+  const startY = 92;
+  const rowHeight = 18;
+  let y = startY;
+  doc.setFontSize(10);
+  doc.text('#', 40, y);
+  doc.text('Tipo', 70, y);
+  doc.text('Número / Texto', 140, y);
+  doc.text('Hora', 360, y);
+  doc.text('Estado', 480, y);
+  y += rowHeight;
+
+  // limit rows per page
+  const rowsPerPage = 38;
+  let rowCount = 0;
+  for(let i=0;i<history.length;i++){
+    const item = history[i];
+    if(rowCount >= rowsPerPage){
+      doc.addPage();
+      y = 60;
+      rowCount = 0;
+    }
+    doc.text(String(i+1), 40, y);
+    doc.text(item.tipo, 70, y);
+    // número posiblemente largo -> truncar
+    const numText = String(item.numero).length > 40 ? String(item.numero).slice(0,40)+'...' : String(item.numero);
+    doc.text(numText, 140, y);
+    doc.text(new Date(item.ts).toLocaleString(), 360, y);
+    doc.text(item.duplicado ? 'DOBLE' : 'ÚNICO', 480, y);
+    y += rowHeight;
+    rowCount++;
+  }
+
+  // Nombre de archivo con fecha
+  const filename = `historial-escaneos-sonica-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`;
+  doc.save(filename);
+}
+
+// --------- Events ----------
+loginBtn.addEventListener('click', ()=>{
+  const u = usernameInput.value.trim();
+  const p = passwordInput.value.trim();
+  if(u === AUTH_USER && p === AUTH_PASS){
+    loginBox.style.display = 'none';
+    scannerArea.style.display = 'block';
+    // load state and show
+    loadState();
+    renderHistory();
+    // abrir cámara automáticamente
+    startCamera();
+  } else {
+    alert('Usuario o contraseña incorrectos.');
+  }
+});
+
+loginDemo.addEventListener('click', ()=>{
+  usernameInput.value = AUTH_USER;
+  passwordInput.value = AUTH_PASS;
+});
+
+startCamBtn.addEventListener('click', startCamera);
+stopCamBtn.addEventListener('click', stopCamera);
+
+clearHistoryBtn.addEventListener('click', ()=>{
+  if(!confirm('¿Borrar todo el historial de escaneos? Esta acción no se puede deshacer.')) return;
+  history = [];
+  seenSet = new Set();
+  saveState();
+  renderHistory();
+  showLog('Historial borrado.');
+});
+
+exportPdfBtn.addEventListener('click', exportPdf);
+
+toggleSoundBtn.addEventListener('click', ()=>{
+  soundOn = !soundOn;
+  toggleSoundBtn.innerText = `Sonido: ${soundOn ? 'ON' : 'OFF'}`;
+});
+
+// on load: check if already authenticated in this session (simple)
+window.addEventListener('load', ()=>{
+  // if previously logged in during the same tab session (simple flag)
+  // Not required; start at login.
+  loadState();
+  renderHistory();
+});
+</script>
 </body>
 </html>
