@@ -20,6 +20,8 @@
       --danger: #ef4444;
       --cover: #8b5cf6;
       --entrada: #f97316;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --card-border: rgba(255, 255, 255, 0.08);
     }
     
     * {
@@ -33,7 +35,7 @@
       background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
       color: var(--light);
       min-height: 100vh;
-      padding: 16px;
+      padding: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -42,38 +44,40 @@
     
     .container {
       width: 100%;
-      max-width: 1000px;
+      max-width: 100%;
       margin: 0 auto;
+      padding: 16px;
     }
     
     .app-header {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
+      padding: 10px;
     }
     
     .app-title {
-      font-size: 2.2rem;
+      font-size: 1.8rem;
       font-weight: 800;
       background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
+      margin-bottom: 5px;
     }
     
     .app-subtitle {
       color: var(--gray);
-      font-size: 1rem;
-      margin-bottom: 24px;
+      font-size: 0.9rem;
     }
     
     .card {
-      background: rgba(255, 255, 255, 0.03);
+      background: var(--card-bg);
       backdrop-filter: blur(10px);
-      border-radius: 16px;
-      padding: 24px;
+      border-radius: 20px;
+      padding: 20px;
       box-shadow: 0 8px 32px rgba(2, 6, 23, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      margin-bottom: 24px;
+      border: 1px solid var(--card-border);
+      margin-bottom: 20px;
+      width: 100%;
     }
     
     /* Login */
@@ -83,7 +87,7 @@
     }
     
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
     
     .form-label {
@@ -91,11 +95,12 @@
       margin-bottom: 8px;
       font-weight: 500;
       color: var(--gray);
+      font-size: 0.9rem;
     }
     
     .form-input {
       width: 100%;
-      padding: 12px 16px;
+      padding: 15px;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.1);
       background: rgba(15, 23, 42, 0.5);
@@ -114,7 +119,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 12px 20px;
+      padding: 15px 20px;
       border-radius: 12px;
       border: none;
       font-weight: 600;
@@ -122,6 +127,7 @@
       cursor: pointer;
       transition: all 0.3s ease;
       gap: 8px;
+      width: 100%;
     }
     
     .btn-primary {
@@ -171,27 +177,30 @@
     }
     
     .btn-sm {
-      padding: 8px 12px;
+      padding: 10px 15px;
       font-size: 14px;
+      width: auto;
     }
     
     .btn-group {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
     }
     
     /* Scanner */
     .scanner-container {
       position: relative;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
+      border-radius: 20px;
+      overflow: hidden;
     }
     
     #reader {
       width: 100%;
-      min-height: 300px;
-      border-radius: 16px;
+      min-height: 250px;
+      border-radius: 20px;
       overflow: hidden;
       background: #000;
       position: relative;
@@ -210,11 +219,25 @@
       background: rgba(0, 0, 0, 0.7);
       color: white;
       z-index: 10;
+      border-radius: 20px;
+    }
+    
+    .scanner-frame {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 200px;
+      border: 2px solid var(--primary);
+      border-radius: 15px;
+      box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
+      z-index: 5;
     }
     
     .scanner-animation {
-      width: 80%;
-      height: 4px;
+      width: 100%;
+      height: 3px;
       background: var(--primary);
       border-radius: 4px;
       position: absolute;
@@ -224,41 +247,43 @@
     }
     
     @keyframes scan {
-      0% { top: 40%; }
-      50% { top: 60%; }
-      100% { top: 40%; }
+      0% { top: 20%; }
+      50% { top: 80%; }
+      100% { top: 20%; }
     }
     
     .scanner-status {
-      margin-top: 120px;
-      font-size: 18px;
+      margin-top: 20px;
+      font-size: 16px;
       font-weight: 500;
+      text-align: center;
+      padding: 0 10px;
     }
     
     /* Stats */
     .stats-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
     }
     
     .stat-card {
       background: rgba(255, 255, 255, 0.03);
-      border-radius: 12px;
-      padding: 16px;
+      border-radius: 16px;
+      padding: 15px;
       text-align: center;
     }
     
     .stat-value {
-      font-size: 2rem;
+      font-size: 1.8rem;
       font-weight: 700;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
     }
     
     .stat-label {
       color: var(--gray);
-      font-size: 0.9rem;
+      font-size: 0.8rem;
     }
     
     .stat-entradas {
@@ -286,15 +311,17 @@
     
     .history-table th {
       text-align: left;
-      padding: 12px;
+      padding: 12px 10px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       color: var(--gray);
       font-weight: 600;
+      font-size: 0.8rem;
     }
     
     .history-table td {
-      padding: 12px;
+      padding: 12px 10px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.9rem;
     }
     
     .history-table tr:last-child td {
@@ -306,9 +333,9 @@
     }
     
     .badge {
-      padding: 4px 8px;
+      padding: 5px 10px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 0.75rem;
       font-weight: 600;
     }
     
@@ -334,7 +361,7 @@
     
     /* Logs */
     .log-container {
-      margin-top: 16px;
+      margin-top: 15px;
     }
     
     .log-message {
@@ -358,26 +385,32 @@
       border-left: 4px solid var(--danger);
     }
     
+    /* Footer */
+    .app-footer {
+      text-align: center;
+      color: var(--gray);
+      font-size: 0.75rem;
+      margin-top: 20px;
+      padding: 10px;
+    }
+    
     /* Responsive */
-    @media (max-width: 768px) {
-      .app-title {
-        font-size: 1.8rem;
+    @media (min-width: 768px) {
+      .container {
+        max-width: 700px;
+        padding: 20px;
       }
       
-      .card {
-        padding: 16px;
+      .app-title {
+        font-size: 2.2rem;
       }
       
       .btn-group {
-        flex-direction: column;
-      }
-      
-      .btn {
-        width: 100%;
+        grid-template-columns: repeat(3, 1fr);
       }
       
       .stats-container {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(4, 1fr);
       }
     }
     
@@ -391,12 +424,80 @@
       animation: fadeIn 0.5s ease forwards;
     }
     
-    /* Footer */
-    .app-footer {
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 5px;
+      margin-bottom: 20px;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 10px;
       text-align: center;
-      color: var(--gray);
-      font-size: 14px;
-      margin-top: 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .tab.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    /* Scanner actions */
+    .scanner-actions {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 12px;
+      width: 70px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .action-btn i {
+      font-size: 1.2rem;
+    }
+    
+    .action-btn span {
+      font-size: 0.7rem;
+    }
+    
+    /* Flash effect */
+    .flash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 100;
+      animation: flash 0.3s ease-out;
+    }
+    
+    @keyframes flash {
+      0% { opacity: 0.8; }
+      100% { opacity: 0; }
     }
   </style>
 </head>
@@ -433,87 +534,96 @@
     <!-- Scanner Section -->
     <div id="scannerArea" style="display:none">
       <div class="card">
-        <div class="scanner-container">
-          <div id="reader"></div>
-          <div id="cameraLoading" class="scanner-overlay">
-            <div class="scanner-animation"></div>
-            <div class="scanner-status">Iniciando cámara...</div>
+        <div class="tabs">
+          <div class="tab active" id="scannerTab">Escáner</div>
+          <div class="tab" id="historyTab">Historial</div>
+        </div>
+        
+        <div id="scannerContent">
+          <div class="scanner-container">
+            <div id="reader"></div>
+            <div class="scanner-frame"></div>
+            <div id="cameraLoading" class="scanner-overlay">
+              <div class="scanner-animation"></div>
+              <div class="scanner-status">Activando cámara...</div>
+            </div>
+            <div id="cameraError" class="scanner-overlay" style="display: none">
+              <i class="fas fa-camera-slash" style="font-size: 48px; margin-bottom: 16px;"></i>
+              <div class="scanner-status">Error al acceder a la cámara</div>
+              <button id="retryCamera" class="btn btn-primary" style="margin-top: 16px">
+                <i class="fas fa-redo"></i> Reintentar
+              </button>
+            </div>
           </div>
-          <div id="cameraError" class="scanner-overlay" style="display: none">
-            <i class="fas fa-camera-slash" style="font-size: 48px; margin-bottom: 16px;"></i>
-            <div class="scanner-status">Error al acceder a la cámara</div>
-            <button id="retryCamera" class="btn btn-primary" style="margin-top: 16px">
-              <i class="fas fa-redo"></i> Reintentar
+          
+          <div class="scanner-actions">
+            <div class="action-btn" id="toggleFlash">
+              <i class="fas fa-bolt"></i>
+              <span>Flash</span>
+            </div>
+            <div class="action-btn" id="switchCamera">
+              <i class="fas fa-sync-alt"></i>
+              <span>Cambiar</span>
+            </div>
+            <div class="action-btn" id="toggleSound">
+              <i class="fas fa-volume-up"></i>
+              <span>Sonido</span>
+            </div>
+          </div>
+          
+          <!-- Stats -->
+          <div class="stats-container">
+            <div class="stat-card">
+              <div class="stat-value stat-total" id="totalScans">0</div>
+              <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value stat-entradas" id="entradasCount">0</div>
+              <div class="stat-label">Entradas</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value stat-covers" id="coversCount">0</div>
+              <div class="stat-label">Covers</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value stat-total" id="uniqueCount">0</div>
+              <div class="stat-label">Únicos</div>
+            </div>
+          </div>
+          
+          <!-- Log -->
+          <div class="log-container">
+            <div id="lastLog"></div>
+          </div>
+        </div>
+        
+        <div id="historyContent" style="display: none">
+          <div class="history-container">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Tipo</th>
+                  <th>Número</th>
+                  <th>Hora</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody"></tbody>
+            </table>
+          </div>
+          
+          <div class="btn-group">
+            <button id="clearHistory" class="btn btn-danger btn-sm">
+              <i class="fas fa-trash"></i> Borrar
+            </button>
+            <button id="exportPdf" class="btn btn-success btn-sm">
+              <i class="fas fa-file-pdf"></i> Exportar
+            </button>
+            <button id="logoutBtn" class="btn btn-secondary btn-sm">
+              <i class="fas fa-sign-out-alt"></i> Salir
             </button>
           </div>
-        </div>
-        
-        <div class="btn-group">
-          <button id="startCam" class="btn btn-primary">
-            <i class="fas fa-camera"></i> Abrir cámara
-          </button>
-          <button id="stopCam" class="btn btn-secondary" disabled>
-            <i class="fas fa-stop"></i> Detener cámara
-          </button>
-          <button id="toggleSound" class="btn btn-secondary">
-            <i class="fas fa-volume-up"></i> Sonido: ON
-          </button>
-          <button id="clearHistory" class="btn btn-danger">
-            <i class="fas fa-trash"></i> Borrar historial
-          </button>
-          <button id="exportPdf" class="btn btn-success">
-            <i class="fas fa-file-pdf"></i> Exportar PDF
-          </button>
-          <button id="logoutBtn" class="btn btn-secondary">
-            <i class="fas fa-sign-out-alt"></i> Cerrar sesión
-          </button>
-        </div>
-        
-        <!-- Stats -->
-        <div class="stats-container">
-          <div class="stat-card">
-            <div class="stat-value stat-total" id="totalScans">0</div>
-            <div class="stat-label">Total escaneos</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value stat-entradas" id="entradasCount">0</div>
-            <div class="stat-label">Entradas</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value stat-covers" id="coversCount">0</div>
-            <div class="stat-label">Covers</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value stat-total" id="uniqueCount">0</div>
-            <div class="stat-label">Únicos</div>
-          </div>
-        </div>
-        
-        <!-- Log -->
-        <div class="log-container">
-          <div id="lastLog"></div>
-        </div>
-      </div>
-      
-      <!-- History -->
-      <div class="card">
-        <h3 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-          <i class="fas fa-history"></i> Historial de escaneos
-        </h3>
-        
-        <div class="history-container">
-          <table class="history-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Tipo</th>
-                <th>Número / Texto</th>
-                <th>Hora</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody id="historyTableBody"></tbody>
-          </table>
         </div>
       </div>
     </div>
@@ -536,6 +646,8 @@
     let scanning = false;
     let soundOn = true;
     let currentCameraId = null;
+    let isBackCamera = true;
+    let flashOn = false;
 
     // Element references
     const loginBox = document.getElementById('loginBox');
@@ -551,6 +663,8 @@
     const lastLog = document.getElementById('lastLog');
     const historyTableBody = document.getElementById('historyTableBody');
     const toggleSoundBtn = document.getElementById('toggleSound');
+    const toggleFlashBtn = document.getElementById('toggleFlash');
+    const switchCameraBtn = document.getElementById('switchCamera');
     const logoutBtn = document.getElementById('logoutBtn');
     const cameraLoading = document.getElementById('cameraLoading');
     const cameraError = document.getElementById('cameraError');
@@ -559,6 +673,10 @@
     const entradasCountEl = document.getElementById('entradasCount');
     const coversCountEl = document.getElementById('coversCount');
     const uniqueCountEl = document.getElementById('uniqueCount');
+    const scannerTab = document.getElementById('scannerTab');
+    const historyTab = document.getElementById('historyTab');
+    const scannerContent = document.getElementById('scannerContent');
+    const historyContent = document.getElementById('historyContent');
 
     // -------- Persistencia ----------
     function saveState(){
@@ -593,17 +711,12 @@
           
           // Restaurar configuración de sonido
           soundOn = sessionData.soundOn !== undefined ? sessionData.soundOn : true;
-          toggleSoundBtn.innerHTML = `<i class="fas fa-${soundOn ? 'volume-up' : 'volume-mute'}"></i> Sonido: ${soundOn ? "ON" : "OFF"}`;
+          toggleSoundBtn.innerHTML = `<i class="fas fa-${soundOn ? 'volume-up' : 'volume-mute'}"></i><span>Sonido</span>`;
           
-          // Si la cámara estaba activa, intentar reconectar
-          if (sessionData.cameraActive) {
-            currentCameraId = sessionData.cameraId;
-            setTimeout(() => {
-              startCamera(true); // true = reconexión automática
-            }, 800);
-          } else {
-            renderHistory();
-          }
+          // Iniciar cámara automáticamente
+          setTimeout(() => {
+            startCamera(true);
+          }, 500);
         }
       } catch(e) { 
         console.error("Error loading state:", e);
@@ -675,7 +788,7 @@
           <td><span class="badge ${item.tipo==='COVER' ? 'badge-cover' : 'badge-entrada'}">${item.tipo}</span></td>
           <td>${escapeHtml(item.numero)}</td>
           <td>${formatDate(item.ts)}</td>
-          <td><span class="badge ${item.duplicado ? 'badge-danger' : 'badge-success'}">${item.duplicado?'DUPLICADO':'ÚNICO'}</span></td>
+          <td><span class="badge ${item.duplicado ? 'badge-danger' : 'badge-success'}">${item.duplicado?'DUP':'OK'}</span></td>
         `;
         historyTableBody.appendChild(tr);
       });
@@ -690,6 +803,16 @@
       `;
       lastLog.innerHTML = '';
       lastLog.appendChild(logEl);
+      
+      // Auto hide after 3 seconds
+      setTimeout(() => {
+        logEl.style.opacity = '0';
+        setTimeout(() => {
+          if (logEl.parentNode) {
+            logEl.parentNode.removeChild(logEl);
+          }
+        }, 500);
+      }, 3000);
     }
 
     // -------- Manejo escaneo ----------
@@ -700,12 +823,20 @@
       const entry={...p, ts:Date.now(), duplicado:isDup};
       history.unshift(entry);
       
+      // Flash effect
+      const flash = document.createElement('div');
+      flash.className = 'flash';
+      document.body.appendChild(flash);
+      setTimeout(() => {
+        document.body.removeChild(flash);
+      }, 1000);
+      
       if(!isDup){ 
         seenSet.add(key); 
-        showLog(`Escaneo exitoso: ${p.tipo} #${p.numero}`);
+        showLog(`✅ ${p.tipo} #${p.numero} registrado`);
         beep();
       } else { 
-        showLog(`Código duplicado: ${p.tipo} #${p.numero}`, true); 
+        showLog(`⚠️ ${p.tipo} #${p.numero} ya fue escaneado`, true); 
         vibrate(250);
       }
       
@@ -721,37 +852,28 @@
       // Mostrar indicador de carga y ocultar errores
       cameraLoading.style.display = 'flex';
       cameraError.style.display = 'none';
-      startCamBtn.disabled = true;
       
       html5Scanner = new Html5Qrcode("reader", {verbose: false});
-      const config = {fps: 15, qrbox: {width: 250, height: 250}};
+      const config = {fps: 15, qrbox: {width: 200, height: 200}};
       
       try {
         const devices = await Html5Qrcode.getCameras();
         if (devices.length) {
           let camId;
           
-          // Priorizar la cámara usada previamente si está disponible
-          if (currentCameraId) {
-            const previousCamera = devices.find(d => d.id === currentCameraId);
-            if (previousCamera) {
-              camId = previousCamera.id;
-            } else {
-              // Usar la cámara trasera por defecto si está disponible
-              const backCamera = devices.find(d => d.label.toLowerCase().includes('back'));
-              camId = backCamera ? backCamera.id : devices[0].id;
-            }
-          } else {
-            // Usar la cámara trasera por defecto si está disponible
+          // Intentar encontrar la cámara trasera
+          if (isBackCamera) {
             const backCamera = devices.find(d => d.label.toLowerCase().includes('back'));
             camId = backCamera ? backCamera.id : devices[0].id;
+          } else {
+            // Usar cámara frontal
+            const frontCamera = devices.find(d => d.label.toLowerCase().includes('front'));
+            camId = frontCamera ? frontCamera.id : devices[0].id;
           }
           
           currentCameraId = camId;
           await html5Scanner.start({deviceId: {exact: camId}}, config, onDecodedText);
           scanning = true;
-          startCamBtn.disabled = true; 
-          stopCamBtn.disabled = false;
           
           // Guardar estado de sesión
           saveSessionState();
@@ -763,17 +885,14 @@
         } else {
           cameraLoading.style.display = 'none';
           cameraError.style.display = 'flex';
-          startCamBtn.disabled = false;
           showLog("No se encontraron cámaras disponibles.", true);
         }
       } catch(err) { 
         console.error("Camera error:", err); 
         cameraLoading.style.display = 'none';
         cameraError.style.display = 'flex';
-        startCamBtn.disabled = false;
         showLog("Error al acceder a la cámara: " + err.message, true);
         scanning = false;
-        stopCamBtn.disabled = true;
         
         // Si estamos reconectando y falla, intentar de nuevo después de un tiempo
         if (isReconnecting) {
@@ -791,8 +910,6 @@
         console.warn("Error stopping camera:", e);
       }
       scanning = false; 
-      startCamBtn.disabled = false; 
-      stopCamBtn.disabled = true;
       
       // Guardar estado de sesión
       saveSessionState();
@@ -852,8 +969,7 @@
       if(usernameInput.value.trim() === AUTH_USER && passwordInput.value.trim() === AUTH_PASS){
         loginBox.style.display = 'none'; 
         scannerArea.style.display = 'block';
-        loadState(); 
-        startCamera();
+        loadState();
         
         // Guardar estado de sesión
         saveSessionState();
@@ -867,8 +983,26 @@
       passwordInput.value = AUTH_PASS;
     };
 
-    startCamBtn.onclick = () => startCamera(); 
-    stopCamBtn.onclick = stopCamera;
+    toggleSoundBtn.onclick = () => {
+      soundOn = !soundOn; 
+      toggleSoundBtn.innerHTML = `<i class="fas fa-${soundOn ? 'volume-up' : 'volume-mute'}"></i><span>Sonido</span>`;
+      saveSessionState();
+    };
+
+    toggleFlashBtn.onclick = () => {
+      // This would require additional implementation for flash control
+      flashOn = !flashOn;
+      toggleFlashBtn.innerHTML = `<i class="fas fa-${flashOn ? 'bolt' : 'bolt'}"></i><span>Flash ${flashOn ? 'ON' : 'OFF'}</span>`;
+      showLog(flashOn ? "Flash activado" : "Flash desactivado");
+    };
+
+    switchCameraBtn.onclick = () => {
+      if (scanning) {
+        stopCamera();
+        isBackCamera = !isBackCamera;
+        setTimeout(() => startCamera(), 500);
+      }
+    };
 
     clearHistoryBtn.onclick = () => { 
       if(confirm("¿Estás seguro de borrar todo el historial?")) {
@@ -883,12 +1017,6 @@
 
     exportPdfBtn.onclick = exportPdf;
 
-    toggleSoundBtn.onclick = () => {
-      soundOn = !soundOn; 
-      toggleSoundBtn.innerHTML = `<i class="fas fa-${soundOn ? 'volume-up' : 'volume-mute'}"></i> Sonido: ${soundOn ? "ON" : "OFF"}`;
-      saveSessionState();
-    };
-
     logoutBtn.onclick = () => {
       if (scanning) {
         stopCamera();
@@ -902,6 +1030,21 @@
 
     retryCameraBtn.onclick = () => {
       startCamera();
+    };
+
+    scannerTab.onclick = () => {
+      scannerTab.classList.add('active');
+      historyTab.classList.remove('active');
+      scannerContent.style.display = 'block';
+      historyContent.style.display = 'none';
+    };
+
+    historyTab.onclick = () => {
+      historyTab.classList.add('active');
+      scannerTab.classList.remove('active');
+      historyContent.style.display = 'block';
+      scannerContent.style.display = 'none';
+      renderHistory();
     };
 
     // Inicializar la aplicación cuando se carga la página
